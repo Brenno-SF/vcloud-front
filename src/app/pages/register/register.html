@@ -1,0 +1,45 @@
+<div class="register-container">
+
+  <div class="register-header">
+    <h1>vCloud</h1>
+    <h2>Crie sua conta</h2>
+  </div>
+
+  <div class="register-form">
+
+    <input
+      id="username"
+      name="username"
+      type="text"
+      placeholder="Nome de usuário"
+      [(ngModel)]="username"
+    />
+
+    <input
+      id="email"
+      name="email"
+      type="email"
+      placeholder="E-mail"
+      [(ngModel)]="email"
+    />
+
+    <input
+      id="password"
+      name="password"
+      type="password"
+      placeholder="Senha"
+      [(ngModel)]="password"
+    />
+
+    <button (click)="register()">
+      Criar conta
+    </button>
+
+  </div>
+
+  <p class="login-link">
+    Já possui uma conta?
+    <a routerLink="/login">Entrar</a>
+  </p>
+
+</div>

@@ -1,0 +1,360 @@
+.videos-page {
+  min-height: 100vh;
+  background: #0a0a0a;
+  color: #f5f5f5;
+}
+
+
+.topbar {
+  height: 70px;
+  padding: 0 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #1c1c1c;
+}
+
+
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+}
+
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+.upload-button {
+  border: none;
+  border-radius: 7px;
+
+  padding: 10px 16px;
+
+  background: #f5f5f5;
+  color: #0a0a0a;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #dcdcdc;
+  }
+}
+
+
+.logout-button {
+  padding: 10px 16px;
+
+  border: 1px solid #292929;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #aaa;
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  &:hover {
+    color: #fff;
+    border-color: #444;
+  }
+}
+
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+
+  padding: 40px;
+}
+
+
+.page-header {
+  margin-bottom: 30px;
+
+  h1 {
+    margin: 0 0 8px;
+
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+  }
+
+  p {
+    margin: 0;
+
+    color: #777;
+    font-size: 14px;
+  }
+}
+
+
+.video-grid {
+  display: grid;
+
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(250px, 1fr)
+  );
+
+  gap: 24px;
+}
+
+
+.video-card {
+  overflow: hidden;
+
+  border: 1px solid #1f1f1f;
+  border-radius: 10px;
+
+  background: #111;
+
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    border-color: #333;
+    transform: translateY(-2px);
+  }
+}
+
+
+.thumbnail {
+  height: 150px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #181818;
+
+  color: #777;
+
+  font-size: 28px;
+}
+
+
+.video-info {
+  padding: 16px;
+
+  h3 {
+    margin: 0 0 10px;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+
+.video-meta {
+  display: flex;
+  justify-content: space-between;
+
+  color: #666;
+
+  font-size: 12px;
+}
+
+
+.loading {
+  padding: 80px 0;
+
+  text-align: center;
+
+  color: #666;
+}
+
+
+.empty-state {
+  padding: 100px 20px;
+
+  text-align: center;
+
+  border: 1px dashed #292929;
+  border-radius: 10px;
+
+  .empty-icon {
+    margin-bottom: 20px;
+
+    color: #555;
+    font-size: 32px;
+  }
+
+  h2 {
+    margin: 0 0 8px;
+
+    font-size: 18px;
+    font-weight: 500;
+  }
+
+  p {
+    margin: 0 0 24px;
+
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.75);
+
+  z-index: 1000;
+}
+
+.upload-modal {
+  position: relative;
+
+  width: 420px;
+  max-width: calc(100% - 40px);
+
+  padding: 32px;
+
+  background: #151515;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+
+  text-align: center;
+}
+
+.modal-close {
+  position: absolute;
+
+  top: 12px;
+  right: 14px;
+
+  border: none;
+  background: transparent;
+
+  color: #aaa;
+
+  font-size: 28px;
+  cursor: pointer;
+
+  &:hover {
+    color: white;
+  }
+}
+
+.upload-icon {
+  width: 58px;
+  height: 58px;
+
+  margin: 0 auto 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #242424;
+
+  font-size: 32px;
+  color: #fff;
+}
+
+.upload-modal h2 {
+  margin-bottom: 8px;
+}
+
+.upload-modal p {
+  margin-bottom: 24px;
+  color: #888;
+}
+
+.file-input {
+  display: block;
+
+  padding: 14px;
+
+  border: 1px dashed #444;
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  color: #ddd;
+
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: #777;
+  }
+
+  input {
+    display: none;
+  }
+}
+
+.selected-file {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  margin-top: 20px;
+  padding: 14px;
+
+  border-radius: 8px;
+
+  background: #202020;
+
+  text-align: left;
+
+  overflow: hidden;
+
+  strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  span {
+    color: #888;
+    font-size: 13px;
+  }
+}
+
+.confirm-upload-button {
+  width: 100%;
+
+  margin-top: 20px;
+  padding: 12px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: white;
+  color: #111;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
