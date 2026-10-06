@@ -4,7 +4,8 @@ import { CommonModule } from '@angular/common';
 import { VideosService } from '../../core/services/videos.service';
 import { Video } from '../../models/video';
 import { VideoRequest } from '../../models/videoRequest';
-import { switchMap, map } from 'rxjs';
+import { switchMap, map, firstValueFrom } from 'rxjs';
+import { CompleteUploadDto, PartsDto } from '../../dto/CompleteUploadDto';
 
 @Component({
   selector: 'app-videos',
@@ -19,7 +20,7 @@ export class Videos implements OnInit {
 
   showUploadModal = false;
   selectedFile: File | null = null;
-  
+
   uploadId: string = '';
 
   constructor(private videoService: VideosService) { }
@@ -71,27 +72,28 @@ export class Videos implements OnInit {
     this.selectedFile = input.files[0];
   }
 
-  uploadVideo(): void {
+  async uploadVideo(): Promise<void> {
 
     if (!this.selectedFile) {
       return;
     }
 
     const file = this.selectedFile;
-    
+
     const videoRequest: VideoRequest = {
       originalFilename: file.name,
       contentType: file.type,
       sizeBytes: file.size
     };
 
-    if (file.size <= 10 * 1024 * 1024) {
+    let totalSize: number = file.size;
+    if (totalSize <= 10 * 1024 * 1024) {
 
 
       this.videoService.uploadSmallVideo(videoRequest)
         .pipe(
           switchMap(response => {
-            return this.videoService.uploadSmallVideoToS3(response.presignedUrl,file)
+            return this.videoService.uploadSmallVideoToS3(response.presignedUrl, file)
               .pipe(
                 map(() => response.videoId)
               );
@@ -102,60 +104,66 @@ export class Videos implements OnInit {
 
         ).subscribe({
           next: completeResponse => {
-            console.log('Upload completo:',completeResponse);
+            console.log('Upload completo:', completeResponse);
             this.closeUploadModal();
             this.loadVideos();
           },
           error: error => {
-            console.error('Erro durante o upload:',error);
+            console.error('Erro durante o upload:', error);
           }
         });
 
     } else {
+      
+      let chunkSize: number = 10 * 1024 * 1024; // 10 MB
+      let totalChunks: number = Math.ceil(totalSize / chunkSize);
 
-      this.videoService.uploadLargeVideo(videoRequest)
-        .subscribe({
-          next: response => {
-            console.log('Upload de vídeo grande iniciado:',response);
-            this.uploadId = response;
-          },
-          error: error => {
-            console.error('Erro ao iniciar upload de vídeo grande:',error);
+      try {
+
+        const uploadId = await firstValueFrom(this.videoService.uploadLargeVideo(videoRequest));
+
+        this.uploadId = uploadId;
+
+        const presignedUrls = await firstValueFrom(this.videoService.generatePresignedUrl(videoRequest, totalChunks, uploadId));
+
+        const parts: PartsDto[] = [];
+
+        for (let i = 0; i < totalChunks; i++) {
+
+          const start = i * chunkSize;
+          const end = Math.min(start + chunkSize, totalSize);
+          const chunk = file.slice(start, end);
+
+          console.log(
+            `Enviando parte ${i + 1}/${totalChunks}`
+          );
+
+          const response = await firstValueFrom(this.videoService.uploadLargeVideoToS3(presignedUrls[i], chunk));
+
+          const eTag = response.headers.get('ETag');
+
+          if (!eTag) {
+            throw new Error(
+              `S3 não retornou ETag para a parte ${i + 1}`
+            );
           }
-        });
-        
-        let presignedUrlResponse: string[] = [];
 
-        this.videoService.generatePresignedUrl(videoRequest, 1, this.uploadId)
-        .subscribe({
-          next: response => {
-            console.log('Presigned URL gerada:',response);
-            presignedUrlResponse = response;
-          },
-          error: error => {
-            console.error('Erro ao gerar presigned URL:',error);
-          }
-        });
+          console.log(`Parte ${i + 1} enviada. ETag:`,eTag);
+          parts.push({ partNumber: i + 1, eTag: eTag });
+        }
 
-        let totalSize: number = file.size;
-        let chunkSize: number = 10 * 1024 * 1024; // 10 MB
-        let totalChunks: number = Math.ceil(totalSize / chunkSize);
-        
-        for(let i = 0; i < totalChunks; i++) {
-          let start: number = i * chunkSize;
-          let end: number = Math.min(start + chunkSize, totalSize);
-          let chunk: Blob = file.slice(start, end);
+        const dto: CompleteUploadDto = {
+          uploadId: uploadId,
+          parts: parts
+        };
 
-          this.videoService.uploadLargeVideoToS3(presignedUrlResponse[i], chunk as File)
-            .subscribe({
-              next: () => {
-                console.log(`Chunk ${i + 1} de ${totalChunks} enviado com sucesso.`);
-              },
-              error: error => {
-                console.error(`Erro ao enviar chunk ${i + 1}:`, error);
-              }
-            });
+        const completeResponse = await firstValueFrom(this.videoService.completeLargeVideo(dto));
 
+        this.closeUploadModal();
+        this.loadVideos();
+
+      } catch (error) {
+        console.error('Erro durante o upload multipart:', error);
       }
 
     }
