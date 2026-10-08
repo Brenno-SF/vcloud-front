@@ -358,3 +358,65 @@
     opacity: 0.9;
   }
 }
+
+.video-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.video-title-row h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.action-button {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-size: 16px;
+
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+.download-button {
+  background: #e8f0ff;
+  color: #2563eb;
+}
+
+.download-button:hover {
+  background: #dbe7ff;
+}
+
+.delete-button {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-button:hover {
+  background: #fecaca;
+}

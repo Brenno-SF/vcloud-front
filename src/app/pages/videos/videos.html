@@ -81,9 +81,32 @@
 
               <div class="video-info">
 
-                <h3>
-                  {{ video.originalFilename }}
-                </h3>
+                <div class="video-title-row">
+                  <h3>
+                    {{ video.originalFilename }}
+                  </h3>
+
+                  <div class="video-actions">
+
+                    <button
+                      class="action-button download-button"
+                      type="button"
+                      title="Baixar vídeo"
+                      (click)="downloadVideo(video)">
+                      ↓
+                    </button>
+
+                    <button
+                      class="action-button delete-button"
+                      type="button"
+                      title="Excluir vídeo"
+                      (click)="deleteVideo(video)">
+                      🗑
+                    </button>
+
+                  </div>
+
+                </div>
 
                 <div class="video-meta">
 

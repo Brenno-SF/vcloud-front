@@ -58,4 +58,14 @@ export class VideosService {
   completeLargeVideo(dto: CompleteUploadDto) {
     return this.http.post<Video>(this.apiUrl + `/videos/complete-multipart`, dto);
   }
+
+  deleteVideo(keyName: string) {
+    return this.http.delete(this.apiUrl + `/videos/delete/${keyName}`);
+  }
+
+  downloadVideo(keyName: string, videoId: string) {
+    return this.http.get(this.apiUrl + `/videos/download/${keyName}/${videoId}`, {
+      responseType: 'blob'
+    });
+  }
 }

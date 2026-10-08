@@ -35,7 +35,7 @@ export class Videos implements OnInit {
         console.log('Resposta do backend:', response);
         this.videos = response;
         this.loading = false;
-        console.log('3 - loading:', this.loading);
+        console.log('loading:', this.loading);
       },
       error: error => {
         console.error('Erro ao carregar vídeos:', error);
@@ -98,28 +98,8 @@ export class Videos implements OnInit {
 
       const complete = await firstValueFrom(this.videoService.completeSmallVideo(presignedUrlResponse.videoId) );
 
-      // this.videoService.uploadSmallVideo(videoRequest)
-      //   .pipe(
-      //     switchMap(response => {
-      //       return this.videoService.uploadSmallVideoToS3(response.presignedUrl, file)
-      //         .pipe(
-      //           map(() => response.videoId)
-      //         );
-      //     }),
-      //     switchMap(videoId => {
-      //       return this.videoService.completeSmallVideo(videoId);
-      //     })
-
-      //   ).subscribe({
-      //     next: completeResponse => {
-      //       console.log('Upload completo:', completeResponse);
-      //       this.closeUploadModal();
-      //       this.loadVideos();
-      //     },
-      //     error: error => {
-      //       console.error('Erro durante o upload:', error);
-      //     }
-      //   });
+      this.closeUploadModal();
+      this.loadVideos();
 
     } else {
       
@@ -169,5 +149,18 @@ export class Videos implements OnInit {
       }
 
     }
+  }
+
+  async deleteVideo(video: Video) {
+    const confirmation = confirm(`Tem certeza de que deseja excluir o vídeo "${video.originalFilename}"?`);
+    if (confirmation) {
+      await firstValueFrom(this.videoService.deleteVideo(video.id + '/' + video.originalFilename));
+      this.loadVideos();
+    }
+    this.loadVideos();
+  }
+  async downloadVideo(video: Video) {
+  
+    await firstValueFrom(this.videoService.downloadVideo(video.id, video.id));
   }
 }
