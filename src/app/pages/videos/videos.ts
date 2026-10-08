@@ -89,29 +89,37 @@ export class Videos implements OnInit {
     let totalSize: number = file.size;
     if (totalSize <= 10 * 1024 * 1024) {
 
+      
+      const presignedUrlResponse = await firstValueFrom(this.videoService.uploadSmallVideo(videoRequest));
 
-      this.videoService.uploadSmallVideo(videoRequest)
-        .pipe(
-          switchMap(response => {
-            return this.videoService.uploadSmallVideoToS3(response.presignedUrl, file)
-              .pipe(
-                map(() => response.videoId)
-              );
-          }),
-          switchMap(videoId => {
-            return this.videoService.completeSmallVideo(videoId);
-          })
+      console.log(presignedUrlResponse);
 
-        ).subscribe({
-          next: completeResponse => {
-            console.log('Upload completo:', completeResponse);
-            this.closeUploadModal();
-            this.loadVideos();
-          },
-          error: error => {
-            console.error('Erro durante o upload:', error);
-          }
-        });
+      const response = await firstValueFrom(this.videoService.uploadSmallVideoToS3(presignedUrlResponse.uploadUrl, file));
+
+      const complete = await firstValueFrom(this.videoService.completeSmallVideo(presignedUrlResponse.videoId) );
+
+      // this.videoService.uploadSmallVideo(videoRequest)
+      //   .pipe(
+      //     switchMap(response => {
+      //       return this.videoService.uploadSmallVideoToS3(response.presignedUrl, file)
+      //         .pipe(
+      //           map(() => response.videoId)
+      //         );
+      //     }),
+      //     switchMap(videoId => {
+      //       return this.videoService.completeSmallVideo(videoId);
+      //     })
+
+      //   ).subscribe({
+      //     next: completeResponse => {
+      //       console.log('Upload completo:', completeResponse);
+      //       this.closeUploadModal();
+      //       this.loadVideos();
+      //     },
+      //     error: error => {
+      //       console.error('Erro durante o upload:', error);
+      //     }
+      //   });
 
     } else {
       
@@ -121,8 +129,6 @@ export class Videos implements OnInit {
       try {
 
         const uploadId = await firstValueFrom(this.videoService.uploadLargeVideo(videoRequest));
-
-        this.uploadId = uploadId;
 
         const presignedUrls = await firstValueFrom(this.videoService.generatePresignedUrl(videoRequest, totalChunks, uploadId));
 
@@ -134,18 +140,14 @@ export class Videos implements OnInit {
           const end = Math.min(start + chunkSize, totalSize);
           const chunk = file.slice(start, end);
 
-          console.log(
-            `Enviando parte ${i + 1}/${totalChunks}`
-          );
+          console.log(`Enviando parte ${i + 1}/${totalChunks}`);
 
           const response = await firstValueFrom(this.videoService.uploadLargeVideoToS3(presignedUrls[i], chunk));
 
           const eTag = response.headers.get('ETag');
 
           if (!eTag) {
-            throw new Error(
-              `S3 não retornou ETag para a parte ${i + 1}`
-            );
+            throw new Error(`S3 não retornou ETag para a parte ${i + 1}`);
           }
 
           console.log(`Parte ${i + 1} enviada. ETag:`,eTag);

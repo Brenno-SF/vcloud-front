@@ -1,4 +1,5 @@
 export interface Video {
+  id: string;
   originalFilename: string;
   contentType: string;
   sizeBytes: number;

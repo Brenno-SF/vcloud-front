@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { environment } from '../../../environments/environments';
 import { Video } from '../../models/video';
-import { tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { VideoRequest } from '../../models/videoRequest';
 import { CompleteUploadDto } from '../../dto/CompleteUploadDto';
 
@@ -21,28 +21,28 @@ export class VideosService {
   }
 
   uploadSmallVideo(videoRequest: VideoRequest) {
-    return this.http.post<any>(this.apiUrl + '/upload-single-presigned-url', videoRequest);
+    return this.http.post<any>(this.apiUrl + '/videos/upload-single-presigned-url', videoRequest);
   }
 
   uploadSmallVideoToS3(presignedUrl: string, file: File) {
     return this.http.put(presignedUrl, file, {
       headers: {
-        'Content-Type': file.type
+        'Content-Type': file.type,
       },
       observe: 'response',
       responseType: 'text' // Define o tipo de resposta como texto
     });
   }
   completeSmallVideo(videoId: string) {
-    return this.http.post<Video>(this.apiUrl + `/complete-singleupload/${videoId}`, {});
+    return this.http.post<Video>(this.apiUrl + `/videos/complete-singleupload/${videoId}`, {});
   }
 
-  uploadLargeVideo(videoRequest: VideoRequest) {
-    return this.http.post<string>(this.apiUrl + '/start-multipart', videoRequest);
-  }
+  uploadLargeVideo(videoRequest: VideoRequest): Observable<string> {
+  return this.http.post(this.apiUrl + '/videos/start-multipart',videoRequest,{responseType: 'text'});
+}
 
   generatePresignedUrl(videoRequest: VideoRequest, partNumbers: number, uploadId: string) {
-    return this.http.post<string[]>(this.apiUrl + `/generate-multipart-presigned-url/${partNumbers}/${uploadId}`, videoRequest);
+    return this.http.post<string[]>(this.apiUrl + `/videos/generate-multipart-presigned-url/${partNumbers}/${uploadId}`, videoRequest);
   }
 
   uploadLargeVideoToS3(presignedUrl: string, file: Blob) {
@@ -56,6 +56,6 @@ export class VideosService {
   }
 
   completeLargeVideo(dto: CompleteUploadDto) {
-    return this.http.post<Video>(this.apiUrl + `/complete-multipart/`, dto);
+    return this.http.post<Video>(this.apiUrl + `/videos/complete-multipart`, dto);
   }
 }
