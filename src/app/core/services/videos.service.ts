@@ -59,13 +59,11 @@ export class VideosService {
     return this.http.post<Video>(this.apiUrl + `/videos/complete-multipart`, dto);
   }
 
-  deleteVideo(keyName: string) {
-    return this.http.delete(this.apiUrl + `/videos/delete/${keyName}`);
+  deleteVideo(videoId: string) {
+    return this.http.delete(this.apiUrl + `/videos/delete/${videoId}`);
   }
 
-  downloadVideo(keyName: string, videoId: string) {
-    return this.http.get(this.apiUrl + `/videos/download/${keyName}/${videoId}`, {
-      responseType: 'blob'
-    });
+  downloadVideo(videoId: string) {
+    return this.http.get(this.apiUrl + `/videos/download/${videoId}`, { responseType: 'text' });
   }
 }

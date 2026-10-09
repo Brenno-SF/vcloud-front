@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal  } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 import { VideosService } from '../../core/services/videos.service';
 import { Video } from '../../models/video';
@@ -15,31 +16,33 @@ import { CompleteUploadDto, PartsDto } from '../../dto/CompleteUploadDto';
 })
 export class Videos implements OnInit {
 
-  videos: Video[] = [];
-  loading = true;
+  videos = signal<Video[]>([]);
+  loading = signal(true);
 
   showUploadModal = false;
   selectedFile: File | null = null;
 
   uploadId: string = '';
 
-  constructor(private videoService: VideosService) { }
+  constructor(private videoService: VideosService, private router: Router) { }
 
   ngOnInit(): void {
     this.loadVideos();
   }
 
   loadVideos(): void {
+    this.loading.set(true);
+
     this.videoService.getMyVideos().subscribe({
       next: response => {
-        console.log('Resposta do backend:', response);
-        this.videos = response;
-        this.loading = false;
-        console.log('loading:', this.loading);
+        this.videos.set(response);
+        this.loading.set(false);
+
+        console.log('Vídeos carregados:', this.videos().length);
       },
       error: error => {
         console.error('Erro ao carregar vídeos:', error);
-        this.loading = false;
+        this.loading.set(false);
       }
     });
   }
@@ -151,16 +154,47 @@ export class Videos implements OnInit {
     }
   }
 
+  showDeleteModal = false;
+  videoToDelete: Video | null = null;
+
+  openDeleteModal(video: Video): void {
+    console.log('Abrindo modal de exclusão para o vídeo:', video);
+    this.videoToDelete = video;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal = false;
+    this.videoToDelete = null;
+  }
+
   async deleteVideo(video: Video) {
-    const confirmation = confirm(`Tem certeza de que deseja excluir o vídeo "${video.originalFilename}"?`);
-    if (confirmation) {
-      await firstValueFrom(this.videoService.deleteVideo(video.id + '/' + video.originalFilename));
+    try {
+      await firstValueFrom(
+        this.videoService.deleteVideo(video.id)
+      );
+
+      this.closeDeleteModal();
       this.loadVideos();
+
+    } catch (error) {
+      console.error('Erro ao excluir vídeo:', error);
     }
-    this.loadVideos();
   }
   async downloadVideo(video: Video) {
-  
-    await firstValueFrom(this.videoService.downloadVideo(video.id, video.id));
+   
+    try {
+      const url = await firstValueFrom(
+        this.videoService.downloadVideo(video.id)
+      );
+      window.location.href = url;
+    } catch (error) {
+      console.error('Erro ao obter URL de download:', error);
+    }
+  }
+
+  logout() {
+    sessionStorage.removeItem('token');
+    this.router.navigate(['/login']);
   }
 }
