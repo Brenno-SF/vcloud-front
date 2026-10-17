@@ -77,8 +77,16 @@
             <article class="video-card">
 
               <div class="thumbnail">
+              @if (video.thumbnailUrl) {
+                <img
+                  [src]="video.thumbnailUrl"
+                  [alt]="'Thumbnail de ' + video.originalFilename"
+                  loading="lazy"
+                />
+              } @else {
                 <span>▶</span>
-              </div>
+              }
+            </div>
 
               <div class="video-info">
 

@@ -92,14 +92,24 @@ export class Videos implements OnInit {
     let totalSize: number = file.size;
     if (totalSize <= 10 * 1024 * 1024) {
 
-      
-      const presignedUrlResponse = await firstValueFrom(this.videoService.uploadSmallVideo(videoRequest));
+      const thumbnail = await this.captureThumbnail(file);
 
-      console.log(presignedUrlResponse);
+      videoRequest.thumb = {
+        contentType: 'image/jpeg',
+        sizeBytes: thumbnail.size
+      };
+      try {
+        
+        const presignedUrlResponse = await firstValueFrom(this.videoService.uploadSmallVideo(videoRequest));
 
-      const response = await firstValueFrom(this.videoService.uploadSmallVideoToS3(presignedUrlResponse.uploadUrl, file));
-
-      const complete = await firstValueFrom(this.videoService.completeSmallVideo(presignedUrlResponse.videoId) );
+        const uploadResponse = await firstValueFrom(this.videoService.uploadSmallVideoToS3(presignedUrlResponse.videoUploadUrl, file));
+        
+        const thumbnailResponse = await firstValueFrom(this.videoService.uploadThumbnailToS3(presignedUrlResponse.thumbUploadUrl, thumbnail));
+  
+        const complete = await firstValueFrom(this.videoService.completeSmallVideo(presignedUrlResponse.videoId) );
+      }catch (error) {
+        console.error('Erro durante o upload do vídeo pequeno:', error);
+      }
 
       this.closeUploadModal();
       this.loadVideos();
@@ -113,19 +123,25 @@ export class Videos implements OnInit {
 
         const uploadId = await firstValueFrom(this.videoService.uploadLargeVideo(videoRequest));
 
+        
+        const thumbnail = await this.captureThumbnail(file);
+        videoRequest.thumb = {
+          contentType: 'image/jpeg',
+          sizeBytes: thumbnail.size
+        };
         const presignedUrls = await firstValueFrom(this.videoService.generatePresignedUrl(videoRequest, totalChunks, uploadId));
 
         const parts: PartsDto[] = [];
 
+        
         for (let i = 0; i < totalChunks; i++) {
-
           const start = i * chunkSize;
           const end = Math.min(start + chunkSize, totalSize);
           const chunk = file.slice(start, end);
 
           console.log(`Enviando parte ${i + 1}/${totalChunks}`);
 
-          const response = await firstValueFrom(this.videoService.uploadLargeVideoToS3(presignedUrls[i], chunk));
+          const response = await firstValueFrom(this.videoService.uploadLargeVideoToS3(presignedUrls.presignedUrls[i], chunk));
 
           const eTag = response.headers.get('ETag');
 
@@ -142,6 +158,7 @@ export class Videos implements OnInit {
           parts: parts
         };
 
+        const thumbnailResponse = await firstValueFrom(this.videoService.uploadThumbnailToS3(presignedUrls.thumbUploadUrl, thumbnail));
         const completeResponse = await firstValueFrom(this.videoService.completeLargeVideo(dto));
 
         this.closeUploadModal();
@@ -158,7 +175,6 @@ export class Videos implements OnInit {
   videoToDelete: Video | null = null;
 
   openDeleteModal(video: Video): void {
-    console.log('Abrindo modal de exclusão para o vídeo:', video);
     this.videoToDelete = video;
     this.showDeleteModal = true;
   }
@@ -197,4 +213,69 @@ export class Videos implements OnInit {
     sessionStorage.removeItem('token');
     this.router.navigate(['/login']);
   }
+
+  async captureThumbnail(file: Blob): Promise<Blob> {
+    const objectUrl = URL.createObjectURL(file);
+    const video = document.createElement('video');
+
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+    video.src = objectUrl;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(
+          new Error('Não foi possível carregar o vídeo')
+        );
+      });
+
+      // Captura em 1 segundo ou no meio de vídeos muito curtos
+      const time = Math.min(1, video.duration / 2);
+
+      await new Promise<void>((resolve, reject) => {
+        video.onseeked = () => resolve();
+        video.onerror = () => reject(
+          new Error('Não foi possível selecionar o frame')
+        );
+
+        video.currentTime = time;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      const context = canvas.getContext('2d');
+
+      if (!context || canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Não foi possível capturar o frame');
+      }
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const thumbnail = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          blob => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Falha ao converter thumbnail'));
+            }
+          },
+          'image/jpeg',
+          0.8
+        );
+      });
+
+      return thumbnail;
+    } finally {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
 }

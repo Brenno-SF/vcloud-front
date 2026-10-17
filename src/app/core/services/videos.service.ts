@@ -33,6 +33,17 @@ export class VideosService {
       responseType: 'text' // Define o tipo de resposta como texto
     });
   }
+
+  uploadThumbnailToS3(presignedUrl: string, file: Blob) {
+    return this.http.put(presignedUrl, file, {
+      headers: {
+        'Content-Type': file.type,
+      },
+      observe: 'response',
+      responseType: 'text' // Define o tipo de resposta como texto
+    });
+  }
+
   completeSmallVideo(videoId: string) {
     return this.http.post<Video>(this.apiUrl + `/videos/complete-singleupload/${videoId}`, {});
   }
@@ -42,7 +53,7 @@ export class VideosService {
 }
 
   generatePresignedUrl(videoRequest: VideoRequest, partNumbers: number, uploadId: string) {
-    return this.http.post<string[]>(this.apiUrl + `/videos/generate-multipart-presigned-url/${partNumbers}/${uploadId}`, videoRequest);
+    return this.http.post<any>(this.apiUrl + `/videos/generate-multipart-presigned-url/${partNumbers}/${uploadId}`, videoRequest);
   }
 
   uploadLargeVideoToS3(presignedUrl: string, file: Blob) {

@@ -4,6 +4,7 @@ export interface Video {
   contentType: string;
   sizeBytes: number;
   status: string;
+  thumbnailUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
