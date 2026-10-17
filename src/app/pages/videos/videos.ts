@@ -18,6 +18,9 @@ export class Videos implements OnInit {
 
   videos = signal<Video[]>([]);
   loading = signal(true);
+  page = 0;
+  size = 10;
+  totalElements = 0;
 
   showUploadModal = false;
   selectedFile: File | null = null;
@@ -33,12 +36,11 @@ export class Videos implements OnInit {
   loadVideos(): void {
     this.loading.set(true);
 
-    this.videoService.getMyVideos().subscribe({
+    this.videoService.getMyVideos(this.page, this.size).subscribe({
       next: response => {
-        this.videos.set(response);
+        this.videos.set(response.content);
+        this.totalElements = response.totalElements;
         this.loading.set(false);
-
-        console.log('Vídeos carregados:', this.videos().length);
       },
       error: error => {
         console.error('Erro ao carregar vídeos:', error);
@@ -278,4 +280,35 @@ export class Videos implements OnInit {
     }
   }
 
+  get totalPages(): number {
+  return Math.ceil(this.totalElements / this.size);
+}
+
+get pages(): number[] {
+  return Array.from(
+    { length: this.totalPages },
+    (_, index) => index
+  );
+}
+
+goToPage(page: number): void {
+  if (
+    page < 0 ||
+    page >= this.totalPages ||
+    page === this.page
+  ) {
+    return;
+  }
+
+  this.page = page;
+  this.loadVideos();
+}
+
+previousPage(): void {
+  this.goToPage(this.page - 1);
+}
+
+nextPage(): void {
+  this.goToPage(this.page + 1);
+}
 }

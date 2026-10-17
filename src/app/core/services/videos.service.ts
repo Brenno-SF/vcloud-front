@@ -1,12 +1,13 @@
 
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 import { environment } from '../../../environments/environments';
 import { Video } from '../../models/video';
 import { Observable, tap } from 'rxjs';
 import { VideoRequest } from '../../models/videoRequest';
 import { CompleteUploadDto } from '../../dto/CompleteUploadDto';
+import { PageResponse } from '../../models/paginationResponose';
 
 @Injectable({
   providedIn: 'root'
@@ -16,8 +17,9 @@ export class VideosService {
 
   constructor(private http: HttpClient) { }
 
-  getMyVideos() {
-    return this.http.get<Video[]>(this.apiUrl + '/videos');
+  getMyVideos(page: number, pageSize: number): Observable<PageResponse<Video>> {
+    const params =  new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+    return this.http.get<PageResponse<Video>>(this.apiUrl + '/videos', { params });
   }
 
   uploadSmallVideo(videoRequest: VideoRequest) {

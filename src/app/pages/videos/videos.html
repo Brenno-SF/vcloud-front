@@ -164,7 +164,49 @@
 
           }
 
-        </div>
+              </div>
+
+        @if (totalPages > 1) {
+          <nav class="pagination" aria-label="Paginação dos vídeos">
+
+            <span class="pagination-info">
+              {{ totalElements }} vídeos
+            </span>
+
+            <div class="pagination-controls">
+
+              <button
+                type="button"
+                class="pagination-button"
+                [disabled]="page === 0 || loading()"
+                (click)="previousPage()">
+                Anterior
+              </button>
+
+              @for (pageNumber of pages; track pageNumber) {
+                <button
+                  type="button"
+                  class="pagination-button page-number"
+                  [class.active]="page === pageNumber"
+                  [attr.aria-current]="page === pageNumber ? 'page' : null"
+                  [disabled]="loading()"
+                  (click)="goToPage(pageNumber)">
+                  {{ pageNumber + 1 }}
+                </button>
+              }
+
+              <button
+                type="button"
+                class="pagination-button"
+                [disabled]="page >= totalPages - 1 || loading()"
+                (click)="nextPage()">
+                Próxima
+              </button>
+
+            </div>
+
+          </nav>
+        }
 
       }
 
